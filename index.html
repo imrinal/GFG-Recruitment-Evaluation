@@ -78,6 +78,11 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
+    
+    /* Modal scrollbar */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
   </style>
 </head>
 <body>
@@ -88,14 +93,24 @@
       <h1 class="text-xl font-bold text-gray-900 tracking-tight">Evaluator Pro</h1>
       <p class="text-sm font-medium text-green-600" id="candidate-tracker">Loading data...</p>
     </div>
-    <div class="flex items-center gap-3">
-      <label class="text-sm font-semibold text-gray-500">Filter Domain:</label>
-      <select id="domainFilter" class="bg-gray-100 border-none rounded-xl px-4 py-2 font-medium text-gray-800 outline-none focus:ring-2 focus:ring-green-500 cursor-pointer transition">
-        <option value="All">All Applications</option>
-        <option value="Technical">Technical</option>
-        <option value="Events">Events</option>
-        <option value="Creatives">Creatives</option>
-      </select>
+    
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Guidelines Button -->
+      <button id="rulesBtn" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:shadow-sm transition active:scale-95">
+        <span>📋</span> Guidelines
+      </button>
+
+      <div class="w-px h-6 bg-gray-300 hidden sm:block"></div>
+
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-semibold text-gray-500">Filter Domain:</label>
+        <select id="domainFilter" class="bg-gray-100 border-none rounded-xl px-4 py-2 font-medium text-gray-800 outline-none focus:ring-2 focus:ring-green-500 cursor-pointer transition">
+          <option value="All">All Applications</option>
+          <option value="Technical">Technical</option>
+          <option value="Events">Events</option>
+          <option value="Creatives">Creatives</option>
+        </select>
+      </div>
     </div>
   </header>
 
@@ -149,6 +164,57 @@
     </button>
   </div>
 
+  <!-- Guidelines Modal -->
+  <div id="rulesModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div id="rulesBackdrop" class="absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity opacity-0 duration-300"></div>
+    <div id="rulesContent" class="relative w-full max-w-3xl max-h-[85vh] bg-white/95 backdrop-blur-2xl border border-gray-200 rounded-3xl shadow-2xl flex flex-col transform scale-95 opacity-0 transition-all duration-300 overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📋</span>
+          <h2 class="text-lg font-bold text-gray-900 tracking-tight">Evaluation Guidelines</h2>
+        </div>
+        <button id="closeRulesBtn" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition active:scale-95">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto custom-scroll space-y-8 bg-white">
+        <div>
+          <h3 class="text-base font-bold text-gray-900 uppercase tracking-wide border-b-2 border-gray-200 pb-2 mb-4">🕵️ General Evaluation (The "BS" Filter)</h3>
+          <ul class="space-y-3 text-sm text-gray-700">
+            <li><span class="font-bold text-gray-900">Idea > Grammar:</span> Ignore fancy words. Focus purely on whether their proposed solution actually makes sense for a student chapter.</li>
+            <li><span class="font-bold text-gray-900">The Constraint Test:</span> Real human ideas mention limitations (time, budget, approvals, server limits). AI assumes unlimited resources and perfect execution.</li>
+            <li><span class="font-bold text-gray-900">SRMIST Context:</span> Give extra points to candidates who mention specific campus logistics (venues, campus wifi issues, local student behavior).</li>
+            <li><span class="font-bold text-gray-900">The Buzzword Penalty:</span> Penalize answers that rely on words like "synergy," "seamless," and "foster" but fail to explain the actual step-by-step process.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-blue-600 uppercase tracking-wide border-b-2 border-blue-100 pb-2 mb-4">💻 Technical Domain</h3>
+          <ul class="space-y-3 text-sm text-gray-700">
+            <li><span class="font-bold text-gray-900">Pragmatism First:</span> Do they suggest a realistic stack (e.g., React, Firebase, MySQL) or are they overcomplicating it with buzzwords (e.g., custom blockchain, AI models for basic tasks)?</li>
+            <li><span class="font-bold text-gray-900">Edge Case Awareness:</span> The best candidates anticipate failure. Do they mention what happens if the database crashes, a form is submitted twice, or the UI breaks on mobile?</li>
+            <li><span class="font-bold text-gray-900">Implementation Speed:</span> Does their solution sound like something a student could actually code in 1-2 weeks?</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-amber-600 uppercase tracking-wide border-b-2 border-amber-100 pb-2 mb-4">🎪 Events Domain</h3>
+          <ul class="space-y-3 text-sm text-gray-700">
+            <li><span class="font-bold text-gray-900">Chaos Management:</span> Look for built-in time buffers (e.g., "I will keep a 15-minute gap for setup"). AI doesn't plan for human delays.</li>
+            <li><span class="font-bold text-gray-900">Crowd Logistics:</span> Reject vague answers like "I will ensure a good atmosphere." Look for specifics: who is holding the mic, how are students routed to their seats, what is the backup venue?</li>
+            <li><span class="font-bold text-gray-900">Delegation:</span> Strong event managers mention how they will use the volunteer team, rather than trying to do everything themselves.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-pink-600 uppercase tracking-wide border-b-2 border-pink-100 pb-2 mb-4">🎨 Creatives Domain</h3>
+          <ul class="space-y-3 text-sm text-gray-700">
+            <li><span class="font-bold text-gray-900">Theme Adherence:</span> (e.g., If the scenario involved your Greek God theme, did they naturally integrate the aesthetic, or just slap a label on a generic design?)</li>
+            <li><span class="font-bold text-gray-900">The Visualization Test:</span> Can you clearly picture the UI, poster, or video they are describing in their answer? If it's too vague to visualize, it's a weak answer.</li>
+            <li><span class="font-bold text-gray-900">Platform Awareness:</span> Do they consider constraints like Instagram grid layouts, aspect ratios, or mobile viewing?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ==========================================
     // PASTE YOUR NEW APPS SCRIPT WEB APP URL HERE
@@ -172,8 +238,39 @@
       marksInput: document.getElementById('marksInput'),
       domainInput: document.getElementById('domainInput'),
       completeBtnText: document.getElementById('completeBtnText'),
-      mainContent: document.getElementById('mainContent')
+      mainContent: document.getElementById('mainContent'),
+      rulesBtn: document.getElementById('rulesBtn'),
+      rulesModal: document.getElementById('rulesModal'),
+      rulesBackdrop: document.getElementById('rulesBackdrop'),
+      rulesContent: document.getElementById('rulesContent'),
+      closeRulesBtn: document.getElementById('closeRulesBtn')
     };
+
+    function openRules() {
+      dom.rulesModal.classList.remove('hidden');
+      dom.rulesModal.classList.add('flex');
+      requestAnimationFrame(() => {
+        dom.rulesBackdrop.classList.remove('opacity-0');
+        dom.rulesBackdrop.classList.add('opacity-100');
+        dom.rulesContent.classList.remove('scale-95', 'opacity-0');
+        dom.rulesContent.classList.add('scale-100', 'opacity-100');
+      });
+    }
+
+    function closeRules() {
+      dom.rulesBackdrop.classList.remove('opacity-100');
+      dom.rulesBackdrop.classList.add('opacity-0');
+      dom.rulesContent.classList.remove('scale-100', 'opacity-100');
+      dom.rulesContent.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => {
+        dom.rulesModal.classList.add('hidden');
+        dom.rulesModal.classList.remove('flex');
+      }, 300);
+    }
+
+    dom.rulesBtn.addEventListener('click', openRules);
+    dom.closeRulesBtn.addEventListener('click', closeRules);
+    dom.rulesBackdrop.addEventListener('click', closeRules);
 
     async function init() {
       try {
@@ -245,10 +342,18 @@
       dom.startEvalBtn.disabled = currentStatus === "Completed";
       dom.startEvalBtn.classList.toggle('opacity-50', currentStatus === "Completed");
 
+      // Dynamic Past Experience Tag
+      const hasExp = c["Has Experience"] === "Yes";
+      const expTagClass = hasExp ? "bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm" : "bg-gray-100 text-gray-500 border border-gray-200 shadow-sm";
+      const expTagText = hasExp ? "Past Club Exp: Yes" : "Past Club Exp: No";
+
       let html = `
         <div class="ios-card relative overflow-hidden bg-gradient-to-br from-white to-gray-50">
-          <div class="absolute top-0 right-0 p-4">
+          <div class="absolute top-0 right-0 p-4 flex items-center gap-2">
             <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${c["Year"]} • ${c["Department"]}</span>
+            <span class="${expTagClass} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              ${expTagText}
+            </span>
           </div>
           <div class="flex items-center gap-3 mb-2">
             <h2 class="text-2xl font-bold text-gray-900">${c["Full Name"]}</h2>
@@ -267,14 +372,15 @@
         return `<div class="mb-5"><h5 class="text-sm font-bold text-gray-700 mb-2">${title}</h5><div class="answer-block shadow-sm">${answer}</div></div>`;
       };
 
-      if (c["Has Experience"] === "Yes" && c.experience) {
-        html += `<div class="ios-card"><h3 class="text-lg font-bold text-gray-900 mb-4">📂 Past Experience</h3>
-        ${generateQA("Previous Roles", c.experience["Previous Roles"])}
-        ${generateQA("Execution & Responsibility", c.experience["Execution & Responsibility"])}
-        ${generateQA("Core Learnings", c.experience["Core Learnings"])}
-        ${generateQA("Constructive Criticism", c.experience["Constructive Criticism"])}
-        ${generateQA("Loyalty Scenario", c.experience["Loyalty Scenario"])}</div>`;
+      if (hasExp && c.experience) {
+        html += `<div class="ios-card border-l-4 border-l-indigo-400"><h3 class="text-lg font-bold text-gray-900 mb-4">📂 Past Club Experience</h3>
+        ${generateQA("Previous Roles: What clubs/communities have you been a part of and what was your role?", c.experience["Previous Roles"])}
+        ${generateQA("Execution & Responsibility: Describe a specific task, campaign, or event you took ownership of.", c.experience["Execution & Responsibility"])}
+        ${generateQA("Core Learnings: What is the biggest practical lesson you learned from your previous club experience?", c.experience["Core Learnings"])}
+        ${generateQA("Constructive Criticism: Tell us about a mistake you made or a time things failed. How did you fix it?", c.experience["Constructive Criticism"])}
+        ${generateQA("Loyalty Scenario: If your previous club has an event on the exact same day as ours, how do you handle your commitments?", c.experience["Loyalty Scenario"])}</div>`;
       }
+      
       if (c.technical) {
         html += `<div class="ios-card border-l-4 border-l-blue-400"><h3 class="text-lg font-bold text-gray-900 mb-4">💻 Technical Domain</h3>
         ${generateQA("Portfolio: List your top 3 technical projects. Briefly explain what they do and provide the GitHub/Live Link for each.", c.technical["Portfolio"])}
@@ -302,7 +408,6 @@
       dom.view.innerHTML = html;
     }
 
-    // Explicit GET fetch mapping to the new Apps Script logic
     async function updateBackend(mark, domain, status) {
       const c = filteredCandidates[currentIndex];
       if (!c || !c["College Mail"]) throw new Error("Candidate email missing.");
@@ -323,7 +428,6 @@
         throw new Error(json.message || "Failed to save to Google Sheets");
       }
 
-      // Update Local arrays instantly to maintain fast UI switching
       c["Marks"] = mark;
       c["Allotted Domain"] = domain;
       c["Evaluation Status"] = status;
