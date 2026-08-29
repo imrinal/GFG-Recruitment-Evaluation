@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GfG Evaluator Pro</title>
+  <title>GfG Evaluator Pro | Phase 1</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -27,6 +27,18 @@
       overflow-y: auto;
       padding-bottom: 140px; 
     }
+    
+    /* Tab System */
+    .tab-btn {
+      color: #71717a;
+    }
+    .tab-btn.active {
+      background: white;
+      color: #18181b;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    /* iOS Cards */
     .ios-card {
       background: #ffffff;
       border-radius: 20px;
@@ -35,17 +47,26 @@
       padding: 24px;
       margin-bottom: 20px;
     }
+    .qa-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e4e4e7;
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    }
     .answer-block {
-      background: #fafafa;
+      background: #f8fafc;
       border-radius: 12px;
       padding: 16px;
-      margin-top: 8px;
-      border: 1px solid #f4f4f5;
-      color: #3f3f46;
-      font-size: 15px;
+      border: 1px solid #f1f5f9;
+      color: #334155;
+      font-size: 14.5px;
       line-height: 1.6;
       white-space: pre-wrap;
+      word-break: break-word;
     }
+
     /* Floating iOS Dock Footer */
     .floating-dock {
       position: fixed;
@@ -68,6 +89,8 @@
       overflow-x: auto;
       white-space: nowrap;
     }
+    
+    /* Animations & Smooth Accordion */
     .fade-enter {
       animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
@@ -75,59 +98,68 @@
       0% { opacity: 0; transform: translateY(10px); }
       100% { opacity: 1; transform: translateY(0); }
     }
+    
+    .accordion-content-wrapper {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .qa-card.is-open .accordion-content-wrapper {
+      grid-template-rows: 1fr;
+    }
+    .accordion-inner {
+      min-height: 0;
+      overflow: hidden;
+    }
+    .accordion-icon {
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .qa-card.is-open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
-    
-    /* Modal scrollbar */
-    .custom-scroll::-webkit-scrollbar { width: 4px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
   </style>
 </head>
 <body>
 
-  <!-- Top Header & Filter -->
-  <header class="glass-header sticky top-0 z-40 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+  <header class="glass-header sticky top-0 z-40 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
     <div>
-      <h1 class="text-xl font-bold text-gray-900 tracking-tight">Evaluator Pro</h1>
-      <p class="text-sm font-medium text-green-600" id="candidate-tracker">Loading data...</p>
+      <h1 class="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+        Evaluator Pro 
+        <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">Phase 1</span>
+      </h1>
+      <p class="text-sm font-medium text-gray-500 mt-1" id="candidate-tracker">Syncing...</p>
     </div>
     
-    <div class="flex flex-wrap items-center gap-3">
-      <!-- Guidelines Button -->
-      <button id="rulesBtn" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:shadow-sm transition active:scale-95">
-        <span>📋</span> Guidelines
+    <div class="flex p-1 bg-gray-100/80 rounded-xl shadow-inner border border-gray-200/60 overflow-x-auto custom-scroll" id="tabContainer">
+      <button class="tab-btn active px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0" data-tab="Technical">Technical</button>
+      <button class="tab-btn px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0" data-tab="Events">Events</button>
+      <button class="tab-btn px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0" data-tab="Creatives">Creatives</button>
+      <div class="w-px h-6 bg-gray-300 mx-2 self-center flex-shrink-0"></div>
+      <button class="tab-btn px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0 text-indigo-600 flex items-center gap-1.5" data-tab="Guidelines">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+        Guidelines
       </button>
-
-      <div class="w-px h-6 bg-gray-300 hidden sm:block"></div>
-
-      <div class="flex items-center gap-2">
-        <label class="text-sm font-semibold text-gray-500">Filter Domain:</label>
-        <select id="domainFilter" class="bg-gray-100 border-none rounded-xl px-4 py-2 font-medium text-gray-800 outline-none focus:ring-2 focus:ring-green-500 cursor-pointer transition">
-          <option value="All">All Applications</option>
-          <option value="Technical">Technical</option>
-          <option value="Events">Events</option>
-          <option value="Creatives">Creatives</option>
-        </select>
-      </div>
     </div>
   </header>
 
-  <!-- Main Scrollable Content -->
   <div class="scroll-container px-4 sm:px-8 py-6" id="mainContent">
     <div id="loader" class="flex justify-center items-center h-full">
       <div class="animate-pulse flex flex-col items-center">
-        <div class="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p class="text-gray-500 font-medium text-sm">Syncing with secure backend...</p>
       </div>
     </div>
-    <div id="candidateView" class="max-w-4xl mx-auto hidden fade-enter"></div>
+    
+    <div id="dynamicView" class="max-w-4xl mx-auto hidden"></div>
   </div>
 
-  <!-- Floating iOS Dock Footer -->
   <div class="floating-dock hidden" id="evalFooter">
-    
     <button id="prevBtn" class="flex-shrink-0 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition active:scale-95 text-sm disabled:opacity-50">
       ◀ Prev
     </button>
@@ -159,60 +191,9 @@
       </div>
     </div>
 
-    <button id="completeBtn" class="flex-shrink-0 ml-auto px-6 py-2.5 rounded-xl bg-green-600 text-white font-bold shadow-md hover:bg-green-700 hover:shadow-lg transition active:scale-95 text-sm flex items-center gap-2">
+    <button id="completeBtn" class="flex-shrink-0 ml-auto px-6 py-2.5 rounded-xl bg-gray-900 text-white font-bold shadow-md hover:bg-gray-800 hover:shadow-lg transition active:scale-95 text-sm flex items-center gap-2">
       <span id="completeBtnText">✅ Complete</span>
     </button>
-  </div>
-
-  <!-- Guidelines Modal -->
-  <div id="rulesModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
-    <div id="rulesBackdrop" class="absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity opacity-0 duration-300"></div>
-    <div id="rulesContent" class="relative w-full max-w-3xl max-h-[85vh] bg-white/95 backdrop-blur-2xl border border-gray-200 rounded-3xl shadow-2xl flex flex-col transform scale-95 opacity-0 transition-all duration-300 overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">📋</span>
-          <h2 class="text-lg font-bold text-gray-900 tracking-tight">Evaluation Guidelines</h2>
-        </div>
-        <button id="closeRulesBtn" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition active:scale-95">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-      <div class="p-6 overflow-y-auto custom-scroll space-y-8 bg-white">
-        <div>
-          <h3 class="text-base font-bold text-gray-900 uppercase tracking-wide border-b-2 border-gray-200 pb-2 mb-4">🕵️ General Evaluation (The "BS" Filter)</h3>
-          <ul class="space-y-3 text-sm text-gray-700">
-            <li><span class="font-bold text-gray-900">Idea > Grammar:</span> Ignore fancy words. Focus purely on whether their proposed solution actually makes sense for a student chapter.</li>
-            <li><span class="font-bold text-gray-900">The Constraint Test:</span> Real human ideas mention limitations (time, budget, approvals, server limits). AI assumes unlimited resources and perfect execution.</li>
-            <li><span class="font-bold text-gray-900">SRMIST Context:</span> Give extra points to candidates who mention specific campus logistics (venues, campus wifi issues, local student behavior).</li>
-            <li><span class="font-bold text-gray-900">The Buzzword Penalty:</span> Penalize answers that rely on words like "synergy," "seamless," and "foster" but fail to explain the actual step-by-step process.</li>
-          </ul>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-blue-600 uppercase tracking-wide border-b-2 border-blue-100 pb-2 mb-4">💻 Technical Domain</h3>
-          <ul class="space-y-3 text-sm text-gray-700">
-            <li><span class="font-bold text-gray-900">Pragmatism First:</span> Do they suggest a realistic stack (e.g., React, Firebase, MySQL) or are they overcomplicating it with buzzwords (e.g., custom blockchain, AI models for basic tasks)?</li>
-            <li><span class="font-bold text-gray-900">Edge Case Awareness:</span> The best candidates anticipate failure. Do they mention what happens if the database crashes, a form is submitted twice, or the UI breaks on mobile?</li>
-            <li><span class="font-bold text-gray-900">Implementation Speed:</span> Does their solution sound like something a student could actually code in 1-2 weeks?</li>
-          </ul>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-amber-600 uppercase tracking-wide border-b-2 border-amber-100 pb-2 mb-4">🎪 Events Domain</h3>
-          <ul class="space-y-3 text-sm text-gray-700">
-            <li><span class="font-bold text-gray-900">Chaos Management:</span> Look for built-in time buffers (e.g., "I will keep a 15-minute gap for setup"). AI doesn't plan for human delays.</li>
-            <li><span class="font-bold text-gray-900">Crowd Logistics:</span> Reject vague answers like "I will ensure a good atmosphere." Look for specifics: who is holding the mic, how are students routed to their seats, what is the backup venue?</li>
-            <li><span class="font-bold text-gray-900">Delegation:</span> Strong event managers mention how they will use the volunteer team, rather than trying to do everything themselves.</li>
-          </ul>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-pink-600 uppercase tracking-wide border-b-2 border-pink-100 pb-2 mb-4">🎨 Creatives Domain</h3>
-          <ul class="space-y-3 text-sm text-gray-700">
-            <li><span class="font-bold text-gray-900">Theme Adherence:</span> (e.g., If the scenario involved your Greek God theme, did they naturally integrate the aesthetic, or just slap a label on a generic design?)</li>
-            <li><span class="font-bold text-gray-900">The Visualization Test:</span> Can you clearly picture the UI, poster, or video they are describing in their answer? If it's too vague to visualize, it's a weak answer.</li>
-            <li><span class="font-bold text-gray-900">Platform Awareness:</span> Do they consider constraints like Instagram grid layouts, aspect ratios, or mobile viewing?</li>
-          </ul>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -224,10 +205,11 @@
     let allCandidates = [];
     let filteredCandidates = [];
     let currentIndex = 0;
+    let currentTab = "Technical";
 
     const dom = {
-      filter: document.getElementById('domainFilter'),
-      view: document.getElementById('candidateView'),
+      tabBtns: document.querySelectorAll('.tab-btn'),
+      view: document.getElementById('dynamicView'),
       loader: document.getElementById('loader'),
       footer: document.getElementById('evalFooter'),
       tracker: document.getElementById('candidate-tracker'),
@@ -238,39 +220,19 @@
       marksInput: document.getElementById('marksInput'),
       domainInput: document.getElementById('domainInput'),
       completeBtnText: document.getElementById('completeBtnText'),
-      mainContent: document.getElementById('mainContent'),
-      rulesBtn: document.getElementById('rulesBtn'),
-      rulesModal: document.getElementById('rulesModal'),
-      rulesBackdrop: document.getElementById('rulesBackdrop'),
-      rulesContent: document.getElementById('rulesContent'),
-      closeRulesBtn: document.getElementById('closeRulesBtn')
+      mainContent: document.getElementById('mainContent')
     };
 
-    function openRules() {
-      dom.rulesModal.classList.remove('hidden');
-      dom.rulesModal.classList.add('flex');
-      requestAnimationFrame(() => {
-        dom.rulesBackdrop.classList.remove('opacity-0');
-        dom.rulesBackdrop.classList.add('opacity-100');
-        dom.rulesContent.classList.remove('scale-95', 'opacity-0');
-        dom.rulesContent.classList.add('scale-100', 'opacity-100');
+    // Tab Logic
+    dom.tabBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        dom.tabBtns.forEach(b => b.classList.remove('active'));
+        const targetBtn = e.target.closest('.tab-btn');
+        targetBtn.classList.add('active');
+        currentTab = targetBtn.getAttribute('data-tab');
+        applyFilter();
       });
-    }
-
-    function closeRules() {
-      dom.rulesBackdrop.classList.remove('opacity-100');
-      dom.rulesBackdrop.classList.add('opacity-0');
-      dom.rulesContent.classList.remove('scale-100', 'opacity-100');
-      dom.rulesContent.classList.add('scale-95', 'opacity-0');
-      setTimeout(() => {
-        dom.rulesModal.classList.add('hidden');
-        dom.rulesModal.classList.remove('flex');
-      }, 300);
-    }
-
-    dom.rulesBtn.addEventListener('click', openRules);
-    dom.closeRulesBtn.addEventListener('click', closeRules);
-    dom.rulesBackdrop.addEventListener('click', closeRules);
+    });
 
     async function init() {
       try {
@@ -284,52 +246,75 @@
         applyFilter();
       } catch (error) {
         dom.loader.innerHTML = `
-          <div class="text-center">
-            <p class="text-red-500 font-bold">Failed to load data.</p>
-            <p class="text-gray-400 text-xs mt-2">${error.message}</p>
+          <div class="text-center bg-red-50 p-6 rounded-2xl border border-red-200 max-w-md mx-auto">
+            <p class="text-red-600 font-bold mb-2">Failed to load data.</p>
+            <p class="text-red-500 text-sm">${error.message}</p>
           </div>
         `;
-        console.error("Fetch Error:", error);
       }
     }
 
     function applyFilter() {
-      const filterVal = dom.filter.value;
-      if (filterVal === 'All') {
-        filteredCandidates = allCandidates;
-      } else {
-        filteredCandidates = allCandidates.filter(c => c["Priority 1"] === filterVal);
-      }
-      currentIndex = 0;
-      renderCandidate();
-    }
-
-    dom.filter.addEventListener('change', applyFilter);
-
-    function getStatusBadge(status) {
-      if (status === "Completed") return `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200 shadow-sm">✅ Evaluated</span>`;
-      if (status === "Evaluating") return `<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 shadow-sm">⏳ In Progress</span>`;
-      return `<span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 shadow-sm">Pending</span>`;
-    }
-
-    function renderCandidate() {
-      if (filteredCandidates.length === 0) {
-        dom.loader.classList.add('hidden');
-        dom.footer.classList.add('hidden');
-        dom.view.classList.remove('hidden');
-        dom.view.innerHTML = `<div class="text-center py-20 text-gray-500 font-medium">No candidates found.</div>`;
-        dom.tracker.innerText = `0 of 0 Candidates`;
-        return;
-      }
-
       dom.loader.classList.add('hidden');
-      dom.footer.classList.remove('hidden');
       dom.view.classList.remove('hidden');
-
+      
+      // Reset animations
       dom.view.classList.remove('fade-enter');
       void dom.view.offsetWidth; 
       dom.view.classList.add('fade-enter');
       dom.mainContent.scrollTop = 0;
+
+      if (currentTab === 'Guidelines') {
+        dom.footer.classList.add('hidden');
+        dom.tracker.innerText = `Evaluation Framework`;
+        renderGuidelines();
+        return;
+      }
+
+      dom.footer.classList.remove('hidden');
+      filteredCandidates = allCandidates.filter(c => c["Priority 1"] === currentTab);
+      currentIndex = 0;
+      renderCandidate();
+    }
+
+    function getStatusBadge(status) {
+      if (status === "Completed") return `<span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 shadow-sm whitespace-nowrap">✅ Evaluated</span>`;
+      if (status === "Evaluating") return `<span class="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 shadow-sm whitespace-nowrap">⏳ In Progress</span>`;
+      return `<span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 shadow-sm whitespace-nowrap">Pending</span>`;
+    }
+
+    // Generator for Individual Q&A Accordions
+    function generateQA(title, questionText, answerText, themeColor) {
+      if (!answerText || String(answerText).trim() === "") return '';
+      return `
+        <div class="qa-card border-l-[4px] ${themeColor}">
+          <div class="qa-accordion-header flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors select-none">
+            <h5 class="text-[14.5px] font-bold text-gray-800 flex-1 pr-4">${title}</h5>
+            <div class="p-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm flex-shrink-0">
+              <svg class="accordion-icon w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="accordion-content-wrapper">
+            <div class="accordion-inner">
+              <div class="px-4 pb-4 pt-1">
+                <p class="text-xs text-gray-500 mb-3 italic pl-1 border-l-2 border-gray-200 ml-1">${questionText}</p>
+                <div class="answer-block shadow-sm">${answerText}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCandidate() {
+      if (filteredCandidates.length === 0) {
+        dom.view.innerHTML = `<div class="text-center py-20 text-gray-500 font-medium">No candidates found for ${currentTab}.</div>`;
+        dom.tracker.innerText = `0 of 0 Candidates`;
+        dom.footer.classList.add('hidden');
+        return;
+      }
 
       const c = filteredCandidates[currentIndex];
       dom.tracker.innerText = `Candidate ${currentIndex + 1} of ${filteredCandidates.length}`;
@@ -342,72 +327,194 @@
       dom.startEvalBtn.disabled = currentStatus === "Completed";
       dom.startEvalBtn.classList.toggle('opacity-50', currentStatus === "Completed");
 
-      // Dynamic Past Experience Tag
       const hasExp = c["Has Experience"] === "Yes";
-      const expTagClass = hasExp ? "bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm" : "bg-gray-100 text-gray-500 border border-gray-200 shadow-sm";
+      const expTagClass = hasExp ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-gray-100 text-gray-500 border border-gray-200";
       const expTagText = hasExp ? "Past Club Exp: Yes" : "Past Club Exp: No";
 
+      // Profile Header Card
       let html = `
-        <div class="ios-card relative overflow-hidden bg-gradient-to-br from-white to-gray-50">
-          <div class="absolute top-0 right-0 p-4 flex items-center gap-2">
-            <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${c["Year"]} • ${c["Department"]}</span>
-            <span class="${expTagClass} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              ${expTagText}
-            </span>
+        <div class="ios-card relative bg-gradient-to-br from-white to-gray-50/50" style="padding: 24px;">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <h2 class="text-[22px] font-extrabold text-gray-900 truncate">${c["Full Name"] || 'N/A'}</h2>
+              ${getStatusBadge(currentStatus)}
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm">${c["Year"] || ''} • ${c["Department"] || ''}</span>
+              <span class="${expTagClass} px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                ${expTagText}
+              </span>
+            </div>
           </div>
-          <div class="flex items-center gap-3 mb-2">
-            <h2 class="text-2xl font-bold text-gray-900">${c["Full Name"]}</h2>
-            ${getStatusBadge(currentStatus)}
-          </div>
-          <p class="text-gray-500 font-medium text-sm mb-4">${c["Reg Number"]} | ${c["College Mail"]} | ${c["Phone"]}</p>
-          <div class="flex gap-3">
-            <span class="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold border border-blue-100 shadow-sm">P1: ${c["Priority 1"]}</span>
-            ${c["Priority 2"] ? `<span class="bg-purple-50 text-purple-700 px-4 py-2 rounded-xl text-sm font-bold border border-purple-100 shadow-sm">P2: ${c["Priority 2"]}</span>` : ''}
+          
+          <p class="text-gray-500 font-medium text-sm mb-4 break-all">${c["Reg Number"] || ''} | ${c["College Mail"] || ''} | ${c["Phone"] || ''}</p>
+          
+          <div class="flex gap-3 flex-wrap">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold shadow-sm">P1: ${c["Priority 1"] || 'None'}</span>
+            ${c["Priority 2"] ? `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-100 text-purple-700 text-xs font-bold shadow-sm">P2: ${c["Priority 2"]}</span>` : ''}
           </div>
         </div>
       `;
 
-      const generateQA = (title, answer) => {
-        if (!answer || String(answer).trim() === "") return '';
-        return `<div class="mb-5"><h5 class="text-sm font-bold text-gray-700 mb-2">${title}</h5><div class="answer-block shadow-sm">${answer}</div></div>`;
+      // Helper to wrap domains
+      const renderDomainSection = (title, emoji, content) => {
+        if (!content) return '';
+        return `
+          <div class="mb-8">
+            <h3 class="text-lg font-extrabold text-gray-900 mb-4 ml-1 flex items-center gap-2">
+              <span class="text-xl">${emoji}</span> ${title}
+            </h3>
+            ${content}
+          </div>
+        `;
       };
 
+      // Past Experience Blocks
       if (hasExp && c.experience) {
-        html += `<div class="ios-card border-l-4 border-l-indigo-400"><h3 class="text-lg font-bold text-gray-900 mb-4">📂 Past Club Experience</h3>
-        ${generateQA("Previous Roles: What clubs/communities have you been a part of and what was your role?", c.experience["Previous Roles"])}
-        ${generateQA("Execution & Responsibility: Describe a specific task, campaign, or event you took ownership of.", c.experience["Execution & Responsibility"])}
-        ${generateQA("Core Learnings: What is the biggest practical lesson you learned from your previous club experience?", c.experience["Core Learnings"])}
-        ${generateQA("Constructive Criticism: Tell us about a mistake you made or a time things failed. How did you fix it?", c.experience["Constructive Criticism"])}
-        ${generateQA("Loyalty Scenario: If your previous club has an event on the exact same day as ours, how do you handle your commitments?", c.experience["Loyalty Scenario"])}</div>`;
+        let expHtml = '';
+        const theme = 'border-indigo-400';
+        expHtml += generateQA("Previous Roles", "List the names of the clubs you have been part of, along with your specific designation.", c.experience["Previous Roles"], theme);
+        expHtml += generateQA("Execution", "Name the major events you worked on within those clubs and explicitly describe your role.", c.experience["Execution & Responsibility"], theme);
+        expHtml += generateQA("Core Learnings", "What are the top 3 professional or interpersonal skills you learned during your tenure?", c.experience["Core Learnings"], theme);
+        expHtml += generateQA("Constructive Criticism", "What are the top 3 things you disliked about how those clubs operated?", c.experience["Constructive Criticism"], theme);
+        expHtml += generateQA("The Loyalty Scenario", "If a major event for your previous club and a flagship GfG event happen on the exact same day, how will you prioritize?", c.experience["Loyalty Scenario"], theme);
+        html += renderDomainSection("Past Club Experience", "📂", expHtml);
       }
       
+      // Technical Domain Blocks
       if (c.technical) {
-        html += `<div class="ios-card border-l-4 border-l-blue-400"><h3 class="text-lg font-bold text-gray-900 mb-4">💻 Technical Domain</h3>
-        ${generateQA("Portfolio: List your top 3 technical projects. Briefly explain what they do and provide the GitHub/Live Link for each.", c.technical["Portfolio"])}
-        ${generateQA("Strategic Contribution: What specific technical initiatives, boot camps, or internal tools do you think our chapter is missing, and how would you lead them?", c.technical["Strategic Contribution"])}
-        ${generateQA("The GitHub Crisis: Hours before a flagship launch, someone pushes code that causes a massive merge conflict and breaks the main branch. The author is unresponsive. Walk us through your exact steps to handle this.", c.technical["GitHub Crisis"])}
-        ${generateQA("The Workshop Pivot: 15 minutes into a coding workshop you are leading, a software dependency fails on 50% of the students' machines due to network restrictions. How do you pivot the session?", c.technical["Workshop Pivot"])}</div>`;
+        let techHtml = '';
+        const theme = 'border-blue-400';
+        techHtml += generateQA("Portfolio", "List your top 3 technical projects. Briefly explain what they do and provide the GitHub/Live Link.", c.technical["Portfolio"], theme);
+        techHtml += generateQA("Strategic Contribution", "What specific technical initiatives, boot camps, or internal tools do you think our chapter is missing?", c.technical["Strategic Contribution"], theme);
+        techHtml += generateQA("The GitHub Crisis", "Hours before a launch, someone pushes code causing a massive merge conflict. The author is unresponsive. Walk us through your exact steps.", c.technical["GitHub Crisis"], theme);
+        techHtml += generateQA("The Workshop Pivot", "15 minutes into a coding workshop, a software dependency fails on 50% of the students' machines due to network restrictions. How do you pivot?", c.technical["Workshop Pivot"], theme);
+        html += renderDomainSection("Technical Responses", "💻", techHtml);
       }
+
+      // Events Domain Blocks
       if (c.events) {
-        html += `<div class="ios-card border-l-4 border-l-amber-400"><h3 class="text-lg font-bold text-gray-900 mb-4">🎪 Events Domain</h3>
-        ${generateQA("Event Architecture: Walk us through your timeline and checklist for organizing a 2-day offline tech boot camp for 200 students.", c.events["Event Architecture"])}
-        ${generateQA("Sponsorship Pitch: You need to approach a corporate sponsor for a hackathon. What specific value proposition would you offer, and how would you structure the pitch?", c.events["Sponsorship Pitch"])}
-        ${generateQA("Cross-Club Collaboration: You're partnering with another major club. Their team has erratic working hours and chaotic communication. How do you establish authority and ensure execution?", c.events["Cross-Club Collaboration"])}
-        ${generateQA("Worst-Case Scenario: It's the day of a flagship event. The main speaker cancels 2 hours prior, and only 30% of participants have shown up. What is your immediate action plan?", c.events["Worst-Case Scenario"])}
-        ${generateQA("Internal Deadlock: The Tech team needs 2 more weeks for the portal, but Marketing promised registrations open this Friday. How do you resolve this bottleneck?", c.events["Internal Deadlock"])}</div>`;
+        let evtHtml = '';
+        const theme = 'border-amber-400';
+        evtHtml += generateQA("Event Architecture", "Walk us through your timeline and checklist for organizing a 2-day offline tech boot camp for 200 students.", c.events["Event Architecture"], theme);
+        evtHtml += generateQA("Sponsorship Pitch", "Approach a corporate sponsor for a hackathon. What value proposition would you offer?", c.events["Sponsorship Pitch"], theme);
+        evtHtml += generateQA("Cross-Club Collaboration", "You're partnering with another club with chaotic communication. How do you establish authority?", c.events["Cross-Club Collaboration"], theme);
+        evtHtml += generateQA("Worst-Case Scenario", "The main speaker cancels 2 hours prior, and only 30% of participants have shown up. Immediate action plan?", c.events["Worst-Case Scenario"], theme);
+        evtHtml += generateQA("Internal Deadlock", "The Tech team needs 2 more weeks for the portal, but registrations open this Friday. How do you resolve this?", c.events["Internal Deadlock"], theme);
+        html += renderDomainSection("Events Responses", "🎪", evtHtml);
       }
+
+      // Creatives Domain Blocks
       if (c.creatives) {
-        html += `<div class="ios-card border-l-4 border-l-pink-400"><h3 class="text-lg font-bold text-gray-900 mb-4">🎨 Creatives Domain</h3>
-        ${generateQA("Brand Audit: Look at our current IG page. What 5 strategic visual changes would you implement to drastically increase engagement?", c.creatives["Brand Audit"])}
-        ${generateQA("Translating Tech to Art: A Tech Lead gives you a complex, 3-paragraph text description of an ML workshop and needs a poster tonight. How do you process it into an uncluttered design?", c.creatives["Translating Tech"])}
-        ${generateQA("Aesthetic Vision: If we completely refreshed our visual identity, what color palette, typography, and theme would you choose, and why?", c.creatives["Aesthetic Vision"])}
-        ${generateQA("Reel Ideation: Pitch a 3-part Reel series idea that would hype up first-year students to join the community.", c.creatives["Reel Ideation"])}
-        ${generateQA("Event Photography: During a crowded, high-stress hackathon, how do you capture the aesthetic and focus without interrupting the participants?", c.creatives["Event Photography"])}</div>`;
+        let crtHtml = '';
+        const theme = 'border-pink-400';
+        crtHtml += generateQA("Brand Audit", "Look at our current IG page. What 5 strategic visual changes would you implement?", c.creatives["Brand Audit"], theme);
+        crtHtml += generateQA("Translating Tech to Art", "Process a complex 3-paragraph ML workshop description into an uncluttered design.", c.creatives["Translating Tech"], theme);
+        crtHtml += generateQA("Aesthetic Vision", "If we completely refreshed our visual identity, what color palette, typography, and theme would you choose?", c.creatives["Aesthetic Vision"], theme);
+        crtHtml += generateQA("Reel Ideation", "Pitch a 3-part Reel series idea that would hype up first-year students.", c.creatives["Reel Ideation"], theme);
+        crtHtml += generateQA("Event Photography", "During a crowded hackathon, how do you capture the aesthetic without interrupting participants?", c.creatives["Event Photography"], theme);
+        html += renderDomainSection("Creatives Responses", "🎨", crtHtml);
       }
 
       dom.view.innerHTML = html;
+      attachQAAccordions();
     }
 
+    // Attach ultra-smooth auto-collapsing accordion logic
+    function attachQAAccordions() {
+      const items = document.querySelectorAll('.qa-card');
+      
+      // Auto-open the very first question block on render
+      if(items.length > 0) items[0].classList.add('is-open');
+
+      items.forEach(item => {
+        const header = item.querySelector('.qa-accordion-header');
+        header.addEventListener('click', () => {
+          const isOpen = item.classList.contains('is-open');
+          // Close all
+          items.forEach(i => i.classList.remove('is-open'));
+          // Open clicked if it wasn't open
+          if (!isOpen) item.classList.add('is-open');
+        });
+      });
+    }
+
+    // Guidelines Tab Generation
+    function renderGuidelines() {
+      const gBlock = (title, lookup, high, med, low) => `
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-5 relative overflow-hidden">
+          <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>
+          <h4 class="font-extrabold text-gray-900 text-lg mb-2 pl-2">${title}</h4>
+          <p class="text-[13.5px] text-gray-600 mb-4 pl-2 font-medium italic">What to look for: ${lookup}</p>
+          
+          <div class="space-y-3 pl-2">
+            <div class="flex items-start gap-3 bg-green-50/50 p-3 rounded-xl border border-green-100">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 tracking-wider whitespace-nowrap mt-0.5">16-20</span>
+              <p class="text-sm text-gray-700"><span class="font-bold text-gray-900">High Score:</span> ${high}</p>
+            </div>
+            <div class="flex items-start gap-3 bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 tracking-wider whitespace-nowrap mt-0.5">10-15</span>
+              <p class="text-sm text-gray-700"><span class="font-bold text-gray-900">Medium Score:</span> ${med}</p>
+            </div>
+            <div class="flex items-start gap-3 bg-red-50/50 p-3 rounded-xl border border-red-100">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 tracking-wider whitespace-nowrap mt-0.5">00-09</span>
+              <p class="text-sm text-gray-700"><span class="font-bold text-gray-900">Low Score:</span> ${low}</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      dom.view.innerHTML = `
+        <div class="fade-enter space-y-6 pb-10">
+          <div class="text-center mb-10">
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Phase 1 Evaluation Framework</h2>
+            <p class="text-gray-500 font-medium mt-2">Score each parameter out of 20 (Total 100 Marks)</p>
+          </div>
+          
+          ${gBlock(
+            "1. Execution & Practical Realism", 
+            "Are their answers grounded in real-world constraints, or are they relying on generic AI buzzwords?",
+            "Gives concrete details (e.g., specific tech stacks like React/Firebase, exact timelines, mentioning campus venues like Mini Hall, or noting limitations like budget and server limits).",
+            "Gives standard answers that make sense but lack specific local campus context or depth.",
+            "Vague, overly generic, or uses filler words (\"I will ensure seamless synergy\") without a step-by-step process."
+          )}
+          
+          ${gBlock(
+            "2. Problem-Solving & Crisis Agility", 
+            "Look closely at answers to crisis questions (e.g., the GitHub merge conflict, the workshop dependency crash, the speaker cancellation, or the cross-club communication deadlock).",
+            "Anticipates failure and has built-in buffers (e.g., keeping a backup plan, checking git branches systematically, isolating network issues).",
+            "Solves the problem eventually, but misses crucial immediate containment steps.",
+            "Freezes up, panics, or passes the blame entirely to others (\"I will ask the senior management to fix it\")."
+          )}
+
+          ${gBlock(
+            "3. Domain Depth & Portfolio Quality", 
+            "Evaluate their technical projects, design audits, or event timelines.",
+            "Projects have working live/GitHub links; Instagram brand audits give 5 distinct visual changes; event architectures include clear checklists and delegation.",
+            "Decent projects or ideas, but lacks links or depth in execution details.",
+            "No links provided, generic portfolio items, or superficial understanding of their chosen domain."
+          )}
+
+          ${gBlock(
+            "4. Strategic Vision & Chapter Contribution", 
+            "Look at their answers to 'Strategic Contribution', 'Brand Audit', or 'Event Architecture'. Do they care about the chapter's growth?",
+            "Proposes creative, highly actionable initiatives (e.g., specific internal tools, unique reel series, or novel event ideas that other SRM clubs aren't doing).",
+            "Standard suggestions that keep the club running, but nothing exceptionally creative.",
+            "Zero thought given to chapter improvement or copy-pasted generic answers."
+          )}
+
+          ${gBlock(
+            "5. Attitude, Loyalty & Constructive Maturity", 
+            "Analyze their 'Constructive Criticism' and 'Loyalty Scenario' responses.",
+            "Shows emotional maturity—they critique previous clubs constructively without being bitter, and they handle the loyalty dilemma by prioritizing institutional alignment or setting up clear delegation.",
+            "Standard loyal response, though criticism might sound slightly generic or overly critical.",
+            "Displays toxic traits about past clubs, shows complete disregard for commitments, or avoids the loyalty question entirely."
+          )}
+        </div>
+      `;
+    }
+
+    // Backend Write Logic
     async function updateBackend(mark, domain, status) {
       const c = filteredCandidates[currentIndex];
       if (!c || !c["College Mail"]) throw new Error("Candidate email missing.");
@@ -442,6 +549,7 @@
       }
     }
 
+    // Nav Buttons
     dom.prevBtn.addEventListener('click', () => {
       if (currentIndex > 0) {
         currentIndex--;
