@@ -277,26 +277,26 @@
       }
       if (c.technical) {
         html += `<div class="ios-card border-l-4 border-l-blue-400"><h3 class="text-lg font-bold text-gray-900 mb-4">💻 Technical Domain</h3>
-        ${generateQA("Portfolio", c.technical["Portfolio"])}
-        ${generateQA("Strategic Contribution", c.technical["Strategic Contribution"])}
-        ${generateQA("GitHub Crisis", c.technical["GitHub Crisis"])}
-        ${generateQA("Workshop Pivot", c.technical["Workshop Pivot"])}</div>`;
+        ${generateQA("Portfolio: List your top 3 technical projects. Briefly explain what they do and provide the GitHub/Live Link for each.", c.technical["Portfolio"])}
+        ${generateQA("Strategic Contribution: What specific technical initiatives, boot camps, or internal tools do you think our chapter is missing, and how would you lead them?", c.technical["Strategic Contribution"])}
+        ${generateQA("The GitHub Crisis: Hours before a flagship launch, someone pushes code that causes a massive merge conflict and breaks the main branch. The author is unresponsive. Walk us through your exact steps to handle this.", c.technical["GitHub Crisis"])}
+        ${generateQA("The Workshop Pivot: 15 minutes into a coding workshop you are leading, a software dependency fails on 50% of the students' machines due to network restrictions. How do you pivot the session?", c.technical["Workshop Pivot"])}</div>`;
       }
       if (c.events) {
         html += `<div class="ios-card border-l-4 border-l-amber-400"><h3 class="text-lg font-bold text-gray-900 mb-4">🎪 Events Domain</h3>
-        ${generateQA("Event Architecture", c.events["Event Architecture"])}
-        ${generateQA("Sponsorship Pitch", c.events["Sponsorship Pitch"])}
-        ${generateQA("Cross-Club Collaboration", c.events["Cross-Club Collaboration"])}
-        ${generateQA("Worst-Case Scenario", c.events["Worst-Case Scenario"])}
-        ${generateQA("Internal Deadlock", c.events["Internal Deadlock"])}</div>`;
+        ${generateQA("Event Architecture: Walk us through your timeline and checklist for organizing a 2-day offline tech boot camp for 200 students.", c.events["Event Architecture"])}
+        ${generateQA("Sponsorship Pitch: You need to approach a corporate sponsor for a hackathon. What specific value proposition would you offer, and how would you structure the pitch?", c.events["Sponsorship Pitch"])}
+        ${generateQA("Cross-Club Collaboration: You're partnering with another major club. Their team has erratic working hours and chaotic communication. How do you establish authority and ensure execution?", c.events["Cross-Club Collaboration"])}
+        ${generateQA("Worst-Case Scenario: It's the day of a flagship event. The main speaker cancels 2 hours prior, and only 30% of participants have shown up. What is your immediate action plan?", c.events["Worst-Case Scenario"])}
+        ${generateQA("Internal Deadlock: The Tech team needs 2 more weeks for the portal, but Marketing promised registrations open this Friday. How do you resolve this bottleneck?", c.events["Internal Deadlock"])}</div>`;
       }
       if (c.creatives) {
         html += `<div class="ios-card border-l-4 border-l-pink-400"><h3 class="text-lg font-bold text-gray-900 mb-4">🎨 Creatives Domain</h3>
-        ${generateQA("Brand Audit", c.creatives["Brand Audit"])}
-        ${generateQA("Translating Tech", c.creatives["Translating Tech"])}
-        ${generateQA("Aesthetic Vision", c.creatives["Aesthetic Vision"])}
-        ${generateQA("Reel Ideation", c.creatives["Reel Ideation"])}
-        ${generateQA("Event Photography", c.creatives["Event Photography"])}</div>`;
+        ${generateQA("Brand Audit: Look at our current IG page. What 5 strategic visual changes would you implement to drastically increase engagement?", c.creatives["Brand Audit"])}
+        ${generateQA("Translating Tech to Art: A Tech Lead gives you a complex, 3-paragraph text description of an ML workshop and needs a poster tonight. How do you process it into an uncluttered design?", c.creatives["Translating Tech"])}
+        ${generateQA("Aesthetic Vision: If we completely refreshed our visual identity, what color palette, typography, and theme would you choose, and why?", c.creatives["Aesthetic Vision"])}
+        ${generateQA("Reel Ideation: Pitch a 3-part Reel series idea that would hype up first-year students to join the community.", c.creatives["Reel Ideation"])}
+        ${generateQA("Event Photography: During a crowded, high-stress hackathon, how do you capture the aesthetic and focus without interrupting the participants?", c.creatives["Event Photography"])}</div>`;
       }
 
       dom.view.innerHTML = html;
