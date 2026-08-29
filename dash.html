@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GfG Evaluator Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f4f5;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .glass-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(228, 228, 231, 0.8);
+    }
+    .scroll-container {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 140px; 
+    }
+    .ios-card {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      border: 1px solid #e4e4e7;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .answer-block {
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 8px;
+      border: 1px solid #f4f4f5;
+      color: #3f3f46;
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    /* Floating iOS Dock Footer */
+    .floating-dock {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(228, 228, 231, 0.8);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      border-radius: 24px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 50;
+      width: 95%;
+      max-width: 850px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .fade-enter {
+      animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header & Filter -->
+  <header class="glass-header sticky top-0 z-40 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 tracking-tight">Evaluator Pro</h1>
+      <p class="text-sm font-medium text-green-600" id="candidate-tracker">Loading data...</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <label class="text-sm font-semibold text-gray-500">Filter Domain:</label>
+      <select id="domainFilter" class="bg-gray-100 border-none rounded-xl px-4 py-2 font-medium text-gray-800 outline-none focus:ring-2 focus:ring-green-500 cursor-pointer transition">
+        <option value="All">All Applications</option>
+        <option value="Technical">Technical</option>
+        <option value="Events">Events</option>
+        <option value="Creatives">Creatives</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Main Scrollable Content -->
+  <div class="scroll-container px-4 sm:px-8 py-6" id="mainContent">
+    <div id="loader" class="flex justify-center items-center h-full">
+      <div class="animate-pulse flex flex-col items-center">
+        <div class="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500 font-medium text-sm">Syncing with secure backend...</p>
+      </div>
+    </div>
+    <div id="candidateView" class="max-w-4xl mx-auto hidden fade-enter"></div>
+  </div>
+
+  <!-- Floating iOS Dock Footer -->
+  <div class="floating-dock hidden" id="evalFooter">
+    
+    <button id="prevBtn" class="flex-shrink-0 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition active:scale-95 text-sm disabled:opacity-50">
+      ◀ Prev
+    </button>
+
+    <button id="skipBtn" class="flex-shrink-0 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition active:scale-95 text-sm">
+      Skip ⏭
+    </button>
+    
+    <div class="w-px h-8 bg-gray-200 flex-shrink-0 mx-1"></div>
+
+    <button id="startEvalBtn" class="flex-shrink-0 px-4 py-2.5 rounded-xl bg-amber-100 text-amber-700 font-bold hover:bg-amber-200 transition active:scale-95 text-sm border border-amber-200">
+      ⏳ Start Eval
+    </button>
+    
+    <div class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-xl border border-gray-200 flex-shrink-0 ml-1">
+      <div class="flex items-center gap-2 pl-2">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mark</span>
+        <input type="number" id="marksInput" placeholder="00" class="w-16 px-2 py-1.5 rounded-lg border border-gray-300 text-center font-bold text-gray-900 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 shadow-inner">
+      </div>
+      <div class="w-px h-6 bg-gray-200"></div>
+      <div class="flex items-center gap-2 pr-1">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Alot</span>
+        <select id="domainInput" class="w-28 px-2 py-1.5 rounded-lg border border-gray-300 text-gray-900 font-semibold focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 shadow-inner text-sm">
+          <option value="">None</option>
+          <option value="Technical">Technical</option>
+          <option value="Events">Events</option>
+          <option value="Creatives">Creatives</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="completeBtn" class="flex-shrink-0 ml-auto px-6 py-2.5 rounded-xl bg-green-600 text-white font-bold shadow-md hover:bg-green-700 hover:shadow-lg transition active:scale-95 text-sm flex items-center gap-2">
+      <span id="completeBtnText">✅ Complete</span>
+    </button>
+  </div>
+
+  <script>
+    // ==========================================
+    // PASTE YOUR NEW APPS SCRIPT WEB APP URL HERE
+    // ==========================================
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwqX0NYxpmyeCOlFP2iirQPZ2rjHzslvzO4Tgm8MtucqyxU34lGQz6EFrY7ZaEGFB0/exec"; 
+
+    let allCandidates = [];
+    let filteredCandidates = [];
+    let currentIndex = 0;
+
+    const dom = {
+      filter: document.getElementById('domainFilter'),
+      view: document.getElementById('candidateView'),
+      loader: document.getElementById('loader'),
+      footer: document.getElementById('evalFooter'),
+      tracker: document.getElementById('candidate-tracker'),
+      prevBtn: document.getElementById('prevBtn'),
+      skipBtn: document.getElementById('skipBtn'),
+      startEvalBtn: document.getElementById('startEvalBtn'),
+      completeBtn: document.getElementById('completeBtn'),
+      marksInput: document.getElementById('marksInput'),
+      domainInput: document.getElementById('domainInput'),
+      completeBtnText: document.getElementById('completeBtnText'),
+      mainContent: document.getElementById('mainContent')
+    };
+
+    async function init() {
+      try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=getData`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        if (!Array.isArray(data)) throw new Error("Invalid format received.");
+        
+        allCandidates = data;
+        applyFilter();
+      } catch (error) {
+        dom.loader.innerHTML = `
+          <div class="text-center">
+            <p class="text-red-500 font-bold">Failed to load data.</p>
+            <p class="text-gray-400 text-xs mt-2">${error.message}</p>
+          </div>
+        `;
+        console.error("Fetch Error:", error);
+      }
+    }
+
+    function applyFilter() {
+      const filterVal = dom.filter.value;
+      if (filterVal === 'All') {
+        filteredCandidates = allCandidates;
+      } else {
+        filteredCandidates = allCandidates.filter(c => c["Priority 1"] === filterVal);
+      }
+      currentIndex = 0;
+      renderCandidate();
+    }
+
+    dom.filter.addEventListener('change', applyFilter);
+
+    function getStatusBadge(status) {
+      if (status === "Completed") return `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200 shadow-sm">✅ Evaluated</span>`;
+      if (status === "Evaluating") return `<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 shadow-sm">⏳ In Progress</span>`;
+      return `<span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 shadow-sm">Pending</span>`;
+    }
+
+    function renderCandidate() {
+      if (filteredCandidates.length === 0) {
+        dom.loader.classList.add('hidden');
+        dom.footer.classList.add('hidden');
+        dom.view.classList.remove('hidden');
+        dom.view.innerHTML = `<div class="text-center py-20 text-gray-500 font-medium">No candidates found.</div>`;
+        dom.tracker.innerText = `0 of 0 Candidates`;
+        return;
+      }
+
+      dom.loader.classList.add('hidden');
+      dom.footer.classList.remove('hidden');
+      dom.view.classList.remove('hidden');
+
+      dom.view.classList.remove('fade-enter');
+      void dom.view.offsetWidth; 
+      dom.view.classList.add('fade-enter');
+      dom.mainContent.scrollTop = 0;
+
+      const c = filteredCandidates[currentIndex];
+      dom.tracker.innerText = `Candidate ${currentIndex + 1} of ${filteredCandidates.length}`;
+      dom.prevBtn.disabled = currentIndex === 0;
+
+      dom.marksInput.value = c["Marks"] || '';
+      dom.domainInput.value = c["Allotted Domain"] || '';
+
+      const currentStatus = c["Evaluation Status"] || '';
+      dom.startEvalBtn.disabled = currentStatus === "Completed";
+      dom.startEvalBtn.classList.toggle('opacity-50', currentStatus === "Completed");
+
+      let html = `
+        <div class="ios-card relative overflow-hidden bg-gradient-to-br from-white to-gray-50">
+          <div class="absolute top-0 right-0 p-4">
+            <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${c["Year"]} • ${c["Department"]}</span>
+          </div>
+          <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-2xl font-bold text-gray-900">${c["Full Name"]}</h2>
+            ${getStatusBadge(currentStatus)}
+          </div>
+          <p class="text-gray-500 font-medium text-sm mb-4">${c["Reg Number"]} | ${c["College Mail"]} | ${c["Phone"]}</p>
+          <div class="flex gap-3">
+            <span class="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold border border-blue-100 shadow-sm">P1: ${c["Priority 1"]}</span>
+            ${c["Priority 2"] ? `<span class="bg-purple-50 text-purple-700 px-4 py-2 rounded-xl text-sm font-bold border border-purple-100 shadow-sm">P2: ${c["Priority 2"]}</span>` : ''}
+          </div>
+        </div>
+      `;
+
+      const generateQA = (title, answer) => {
+        if (!answer || String(answer).trim() === "") return '';
+        return `<div class="mb-5"><h5 class="text-sm font-bold text-gray-700 mb-2">${title}</h5><div class="answer-block shadow-sm">${answer}</div></div>`;
+      };
+
+      if (c["Has Experience"] === "Yes" && c.experience) {
+        html += `<div class="ios-card"><h3 class="text-lg font-bold text-gray-900 mb-4">📂 Past Experience</h3>
+        ${generateQA("Previous Roles", c.experience["Previous Roles"])}
+        ${generateQA("Execution & Responsibility", c.experience["Execution & Responsibility"])}
+        ${generateQA("Core Learnings", c.experience["Core Learnings"])}
+        ${generateQA("Constructive Criticism", c.experience["Constructive Criticism"])}
+        ${generateQA("Loyalty Scenario", c.experience["Loyalty Scenario"])}</div>`;
+      }
+      if (c.technical) {
+        html += `<div class="ios-card border-l-4 border-l-blue-400"><h3 class="text-lg font-bold text-gray-900 mb-4">💻 Technical Domain</h3>
+        ${generateQA("Portfolio", c.technical["Portfolio"])}
+        ${generateQA("Strategic Contribution", c.technical["Strategic Contribution"])}
+        ${generateQA("GitHub Crisis", c.technical["GitHub Crisis"])}
+        ${generateQA("Workshop Pivot", c.technical["Workshop Pivot"])}</div>`;
+      }
+      if (c.events) {
+        html += `<div class="ios-card border-l-4 border-l-amber-400"><h3 class="text-lg font-bold text-gray-900 mb-4">🎪 Events Domain</h3>
+        ${generateQA("Event Architecture", c.events["Event Architecture"])}
+        ${generateQA("Sponsorship Pitch", c.events["Sponsorship Pitch"])}
+        ${generateQA("Cross-Club Collaboration", c.events["Cross-Club Collaboration"])}
+        ${generateQA("Worst-Case Scenario", c.events["Worst-Case Scenario"])}
+        ${generateQA("Internal Deadlock", c.events["Internal Deadlock"])}</div>`;
+      }
+      if (c.creatives) {
+        html += `<div class="ios-card border-l-4 border-l-pink-400"><h3 class="text-lg font-bold text-gray-900 mb-4">🎨 Creatives Domain</h3>
+        ${generateQA("Brand Audit", c.creatives["Brand Audit"])}
+        ${generateQA("Translating Tech", c.creatives["Translating Tech"])}
+        ${generateQA("Aesthetic Vision", c.creatives["Aesthetic Vision"])}
+        ${generateQA("Reel Ideation", c.creatives["Reel Ideation"])}
+        ${generateQA("Event Photography", c.creatives["Event Photography"])}</div>`;
+      }
+
+      dom.view.innerHTML = html;
+    }
+
+    // Explicit GET fetch mapping to the new Apps Script logic
+    async function updateBackend(mark, domain, status) {
+      const c = filteredCandidates[currentIndex];
+      if (!c || !c["College Mail"]) throw new Error("Candidate email missing.");
+
+      const params = new URLSearchParams();
+      params.append("action", "update");
+      params.append("email", c["College Mail"]);
+      params.append("mark", mark !== undefined ? mark : "");
+      params.append("domain", domain !== undefined ? domain : "");
+      params.append("status", status !== undefined ? status : "");
+
+      const url = `${APPS_SCRIPT_URL}?${params.toString()}`;
+      
+      const response = await fetch(url);
+      const json = await response.json();
+      
+      if (json.status !== "success") {
+        throw new Error(json.message || "Failed to save to Google Sheets");
+      }
+
+      // Update Local arrays instantly to maintain fast UI switching
+      c["Marks"] = mark;
+      c["Allotted Domain"] = domain;
+      c["Evaluation Status"] = status;
+
+      const masterCandidate = allCandidates.find(x => 
+        String(x["College Mail"]).trim().toLowerCase() === String(c["College Mail"]).trim().toLowerCase()
+      );
+      if (masterCandidate) {
+        masterCandidate["Marks"] = mark;
+        masterCandidate["Allotted Domain"] = domain;
+        masterCandidate["Evaluation Status"] = status;
+      }
+    }
+
+    dom.prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCandidate();
+      }
+    });
+
+    dom.skipBtn.addEventListener('click', () => {
+      if (currentIndex < filteredCandidates.length - 1) {
+        currentIndex++;
+        renderCandidate();
+      } else {
+        alert("End of list reached.");
+      }
+    });
+
+    dom.startEvalBtn.addEventListener('click', async () => {
+      dom.startEvalBtn.disabled = true;
+      dom.startEvalBtn.innerText = "⏳ Saving...";
+      try {
+        await updateBackend(dom.marksInput.value, dom.domainInput.value, "Evaluating");
+        renderCandidate();
+      } catch (error) {
+        alert("Sync Failed: " + error.message);
+      }
+      dom.startEvalBtn.innerText = "⏳ Start Eval";
+      dom.startEvalBtn.disabled = false;
+    });
+
+    dom.completeBtn.addEventListener('click', async () => {
+      const mark = dom.marksInput.value;
+      const domain = dom.domainInput.value;
+
+      dom.completeBtn.disabled = true;
+      dom.completeBtnText.innerText = "Saving...";
+
+      try {
+        await updateBackend(mark, domain, "Completed");
+        
+        dom.completeBtnText.innerText = "Saved ✓";
+        setTimeout(() => {
+          dom.completeBtn.disabled = false;
+          dom.completeBtnText.innerText = "✅ Complete";
+          if (currentIndex < filteredCandidates.length - 1) {
+            currentIndex++;
+            renderCandidate();
+          } else {
+            renderCandidate();
+            alert("List complete.");
+          }
+        }, 500);
+      } catch (error) {
+        dom.completeBtn.disabled = false;
+        dom.completeBtnText.innerText = "✅ Complete";
+        alert("Failed to write to Google Sheets: " + error.message);
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
