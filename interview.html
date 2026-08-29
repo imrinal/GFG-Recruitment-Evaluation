@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GfG Interview Evaluator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f4f5;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .glass-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(228, 228, 231, 0.8);
+    }
+    .scroll-container {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 40px; 
+    }
+    
+    /* Tab System */
+    .tab-btn {
+      color: #71717a;
+    }
+    .tab-btn.active {
+      background: white;
+      color: #18181b;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    /* iOS Card Base */
+    .ios-card {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      border: 1px solid #e4e4e7;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    
+    /* Ultra Smooth Accordion Fix */
+    .accordion-content-wrapper {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .accordion-item.is-open .accordion-content-wrapper {
+      grid-template-rows: 1fr;
+    }
+    .accordion-inner {
+      min-height: 0; 
+      overflow: hidden;
+    }
+    .accordion-icon {
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .accordion-item.is-open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Input Reset */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    
+    /* Smooth Input Focus transition */
+    .eval-input-box {
+      transition: all 0.2s ease-in-out;
+    }
+    .eval-input-box:focus-within {
+      border-color: #6366f1;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Glass Header & Tabs -->
+  <header class="glass-header sticky top-0 z-40 px-6 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+        Interview Portal 
+        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">Phase 2</span>
+      </h1>
+    </div>
+    
+    <!-- Segmented Tabs -->
+    <div class="flex p-1 bg-gray-100/80 rounded-xl shadow-inner border border-gray-200/60 overflow-x-auto custom-scroll" id="tabContainer">
+      <button class="tab-btn active px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0" data-tab="Technical">Technical</button>
+      <button class="tab-btn px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0" data-tab="Events">Events</button>
+      <button class="tab-btn px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0" data-tab="Creatives">Creatives</button>
+      <div class="w-px h-6 bg-gray-300 mx-2 self-center"></div>
+      <button class="tab-btn px-5 py-2 text-sm font-bold rounded-lg transition-all flex-shrink-0 text-indigo-600 flex items-center gap-1.5" data-tab="Questions">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Questions
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Scrollable Content -->
+  <div class="scroll-container px-4 sm:px-8 py-6" id="mainContent">
+    
+    <!-- Loader -->
+    <div id="loader" class="flex justify-center items-center h-full">
+      <div class="animate-pulse flex flex-col items-center">
+        <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500 font-medium text-sm">Fetching Phase 2 Data...</p>
+      </div>
+    </div>
+
+    <!-- Dynamic Content View -->
+    <div id="candidateList" class="max-w-4xl mx-auto hidden"></div>
+
+  </div>
+
+  <script>
+    // ==========================================
+    // UPDATED APPS SCRIPT WEB APP URL
+    // ==========================================
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQy8Uwe9Uq0SnQOjiUTyHXAQltVU3Z7Dnx_HoFQG2W3zfthkycYC1QXDjVQXTZKuQ/exec"; 
+
+    let sheetData = { "Technical": [], "Events": [], "Creatives": [] };
+    let currentTab = "Technical";
+
+    const dom = {
+      loader: document.getElementById('loader'),
+      candidateList: document.getElementById('candidateList'),
+      tabBtns: document.querySelectorAll('.tab-btn'),
+    };
+
+    const EVALUATION_PARAMETERS = [
+      'Vibe & Culture Fit', 
+      'Agility & Logistics', 
+      'Conflict & Crisis EQ', 
+      'Domain Acumen & Vision', 
+      'Leadership & Articulation'
+    ];
+
+    async function init() {
+      try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=getData`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        sheetData = await response.json();
+        renderView();
+      } catch (error) {
+        dom.loader.innerHTML = `
+          <div class="text-center bg-red-50 p-6 rounded-2xl border border-red-200">
+            <p class="text-red-600 font-bold mb-2">Failed to load data.</p>
+            <p class="text-red-500 text-sm">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    dom.tabBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        dom.tabBtns.forEach(b => b.classList.remove('active'));
+        const targetBtn = e.target.closest('.tab-btn');
+        targetBtn.classList.add('active');
+        currentTab = targetBtn.getAttribute('data-tab');
+        renderView();
+      });
+    });
+
+    function getStatusBadge(marks) {
+      if (marks !== undefined && marks !== null && marks !== "") {
+        return `<span class="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-200 flex items-center gap-1 shadow-sm"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Evaluated</span>`;
+      }
+      return `<span class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full text-xs font-bold border border-amber-200 shadow-sm">Pending Evaluation</span>`;
+    }
+
+    function getThemeColor() {
+      if (currentTab === 'Technical') return 'border-blue-400';
+      if (currentTab === 'Events') return 'border-amber-400';
+      if (currentTab === 'Creatives') return 'border-pink-400';
+      return 'border-indigo-400';
+    }
+
+    function renderView() {
+      dom.loader.classList.add('hidden');
+      dom.candidateList.classList.remove('hidden');
+
+      if (currentTab === 'Questions') {
+        renderQuestionsTab();
+        return;
+      }
+      
+      const candidates = sheetData[currentTab] || [];
+      const themeColor = getThemeColor();
+
+      if (candidates.length === 0) {
+        dom.candidateList.innerHTML = `<div class="text-center py-20 text-gray-500 font-medium">No candidates found in ${currentTab}.</div>`;
+        return;
+      }
+
+      let html = '';
+      
+      candidates.forEach((c) => {
+        const hasExp = c["Has Experience"] === "Yes" ? 
+          `<span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border border-indigo-100 shadow-sm ml-3 inline-flex items-center">Exp: Yes</span>` : '';
+        
+        const existingMarks = c["Phase 2 Marks"] || '';
+        const phase1Marks = Number(c["Phase 1 Marks"]) || 0;
+        
+        html += `
+          <div class="ios-card accordion-item border-l-[5px] ${themeColor}" data-email="${c["College Mail"]}" data-p1="${phase1Marks}">
+            
+            <div class="accordion-header flex justify-between items-center p-5 cursor-pointer hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all select-none">
+              <div class="flex-1 min-w-0 pr-4">
+                <h3 class="text-[20px] leading-tight font-extrabold text-gray-900 truncate flex items-center">
+                  ${c["Full Name"] || 'Unknown'} ${hasExp}
+                </h3>
+                <div class="flex flex-wrap items-center gap-3 mt-2">
+                  <p class="text-sm font-medium text-gray-500 truncate">
+                    Reg: ${c["Reg Number"] || 'N/A'}
+                  </p>
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100/80 text-blue-700 text-[11px] font-bold shadow-sm tracking-wide">
+                    <svg class="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                    Phase 1 Score: ${phase1Marks}/100
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 flex-shrink-0">
+                <div class="status-badge-container">${getStatusBadge(existingMarks)}</div>
+                <div class="p-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
+                  <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
+            <div class="accordion-content-wrapper">
+              <div class="accordion-inner">
+                <div class="px-6 pb-6 pt-2"> 
+                  <div class="w-full h-px bg-gray-100 mb-6"></div>
+                  
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-5 mb-7">
+                    <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                      <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Email</span>
+                      <span class="block text-sm font-semibold text-gray-800 truncate" title="${c["College Mail"]}">${c["College Mail"]}</span>
+                    </div>
+                    <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                      <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Phone</span>
+                      <span class="block text-sm font-semibold text-gray-800">${c["Phone"] || 'N/A'}</span>
+                    </div>
+                    <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                      <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Year & Dept</span>
+                      <span class="block text-sm font-semibold text-gray-800 truncate">${c["Year"] || ''} ${c["Department"] || ''}</span>
+                    </div>
+                    <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                      <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Batch</span>
+                      <span class="block text-sm font-semibold text-gray-800">${c["Batch"] || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200/80 shadow-inner">
+                    <h4 class="font-extrabold text-gray-800 mb-5 flex items-center gap-2 text-lg">
+                      🎯 Interview Scoring
+                      <span class="text-xs font-semibold text-gray-500 tracking-wide">(Rate out of 20)</span>
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                      ${EVALUATION_PARAMETERS.map(crit => `
+                        <div class="eval-input-box bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm">
+                          <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wide block mb-1.5">${crit}</label>
+                          <div class="flex items-end gap-2">
+                            <input type="number" min="0" max="20" placeholder="0" class="eval-input w-full text-2xl font-black text-gray-900 focus:outline-none bg-transparent pb-0.5">
+                            <span class="text-gray-400 font-bold mb-1">/ 20</span>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+
+                    <div class="mt-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-5">
+                      <div class="flex flex-col gap-1.5 w-full md:w-auto">
+                        <div class="flex items-center gap-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+                          <span>Phase 1 <span class="opacity-70">(40%)</span></span> <span class="text-gray-300">+</span> 
+                          <span>Phase 2 <span class="opacity-70">(60%)</span></span> <span class="text-gray-300">=</span> 
+                          <span class="text-indigo-500">Total Score</span>
+                        </div>
+                        <div class="flex items-end gap-2">
+                           <span class="text-2xl text-gray-400 font-semibold display-p1-calc tracking-tight">0.0</span>
+                           <span class="text-2xl text-gray-300 font-light mb-0.5">+</span>
+                           <span class="text-2xl text-gray-800 font-bold display-p2-calc tracking-tight">0.0</span>
+                           <span class="text-2xl text-gray-300 font-light mb-0.5">=</span>
+                           <span class="text-4xl text-gray-900 font-black tracking-tighter display-final-score">0.0</span>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                        <div class="display-status-badge px-4 py-2.5 rounded-xl text-sm font-bold bg-gray-100 text-gray-400 border border-gray-200 whitespace-nowrap shadow-sm transition-colors duration-300">
+                           Awaiting Score
+                        </div>
+                        <button class="save-eval-btn bg-gray-900 text-white px-8 py-3 rounded-xl font-bold tracking-wide hover:bg-indigo-600 transition-colors active:scale-95 shadow-md flex-shrink-0">
+                          Save Marks
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div> 
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      dom.candidateList.innerHTML = html;
+      attachEvalListeners();
+    }
+
+    // Specialized Render for the Questions Tab
+    function renderQuestionsTab() {
+      // Helper for standard question blocks
+      const qBlock = (title, text) => `
+        <div class="bg-gray-50/70 p-4 rounded-xl border border-gray-200 shadow-sm mb-3 text-gray-700 text-[14.5px] leading-relaxed relative pl-4 break-words">
+          <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-300 rounded-l-xl"></div>
+          <strong>${title}:</strong> "${text}"
+        </div>`;
+
+      dom.candidateList.innerHTML = `
+        <div class="fade-enter space-y-8 pb-10">
+          
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Interview Playbook</h2>
+            <p class="text-gray-500 font-medium mt-2">15-minute rapid-fire guidelines & evaluation parameters.</p>
+          </div>
+
+          <!-- The 5 Parameters (Matches image_3d4e54) -->
+          <div class="ios-card border-t-[6px] border-t-indigo-500 p-6">
+            <h3 class="text-lg font-extrabold text-gray-900 mb-5 flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+              The 5 Evaluation Parameters <span class="text-sm font-medium text-gray-500 ml-1">(20 Marks Each)</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-indigo-800 text-xs uppercase tracking-wide mb-2">1. Vibe & Culture Fit</h4>
+                <p class="text-[13.5px] text-gray-600 leading-relaxed">Did they show a spark? Are they bringing Gen-Z energy, extroversion, and approachability? (Grooming and body language are scored here).</p>
+              </div>
+              <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-indigo-800 text-xs uppercase tracking-wide mb-2">2. Agility & Logistics</h4>
+                <p class="text-[13.5px] text-gray-600 leading-relaxed">Did they pass the subtle checks for late-stay availability, transport flexibility, day-scholar status, and overall time management?</p>
+              </div>
+              <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-indigo-800 text-xs uppercase tracking-wide mb-2">3. Conflict & Crisis EQ</h4>
+                <p class="text-[13.5px] text-gray-600 leading-relaxed">How well do they handle internal drama, sudden bottlenecks, and chaotic situations without freezing or shifting blame?</p>
+              </div>
+              <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 class="font-bold text-indigo-800 text-xs uppercase tracking-wide mb-2">4. Domain Acumen & Vision</h4>
+                <p class="text-[13.5px] text-gray-600 leading-relaxed">Did they survive the domain trick questions? Can they realistically solve current club gaps (reels, engagement, technical tools)?</p>
+              </div>
+              <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm md:col-span-2 lg:col-span-1">
+                <h4 class="font-bold text-indigo-800 text-xs uppercase tracking-wide mb-2">5. Leadership & Articulation</h4>
+                <p class="text-[13.5px] text-gray-600 leading-relaxed">How well did they reflect on Phase 1? Do they have a clear motive to contribute, or are they just here for a certificate?</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Part 1: General Vibe (Matches image_3d4e8c) -->
+          <div class="ios-card border-t-[6px] border-t-gray-800 p-6">
+            <h3 class="text-xl font-extrabold text-gray-900 mb-5">Part 1: The General Vibe & Logistics <span class="text-sm font-medium text-gray-500 font-normal ml-2">(Ask to ALL Domains)</span></h3>
+            ${qBlock(`The Icebreaker (Talent/Extrovert Check)`, `Welcome! Before we dive into the serious stuff—if the projector breaks and you have to entertain a crowd of 100 students for 2 minutes without tech, what’s your go-to? Singing, stand-up, dancing, or just awkward silence?`)}
+            ${qBlock(`The Meta-Reflection (Articulation)`, `Looking back at the Phase 1 form, which question did you think was the most relevant or challenging, and why did you answer it the way you did?`)}
+            ${qBlock(`The Logistics Trap (Subtle Vehicle Check)`, `Being in the core team often means running around Kattankulathur for last-minute permissions or grabbing supplies at odd hours. How flexible is your schedule for late stays, and do you usually rely on campus shuttles, or do you have your own arrangement?<br><span class="text-xs text-gray-400 mt-2 block font-normal italic">*Listen for "I have a bike" or "I am a day scholar."*</span>`)}
+            ${qBlock(`The Drama Filter (Conflict EQ)`, `Suppose you see two senior core members having a heated argument over an event decision, and you know both are slightly wrong. Do you step in, pick a side, or grab popcorn and watch the drama unfold?`)}
+          </div>
+
+          <!-- Part 2: Domains (Collapsible Accordions) -->
+          <h3 class="text-xl font-extrabold text-gray-900 mb-4 mt-10 px-2">Part 2: Domain-Specific Rapid Fire</h3>
+          
+          <div class="space-y-4">
+            
+            <!-- Tech Accordion (Open by default) -->
+            <div class="ios-card accordion-item playbook-accordion border-l-[5px] border-blue-400 is-open mb-0" style="padding:0;">
+              <div class="accordion-header flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 transition-colors select-none">
+                <h4 class="font-extrabold text-blue-700 text-lg flex items-center gap-2">💻 Technical Domain</h4>
+                <div class="p-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
+                  <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="accordion-content-wrapper">
+                <div class="accordion-inner">
+                  <div class="px-6 pb-6 pt-2">
+                    ${qBlock(`The Engagement Problem`, `Many students join coding communities but lose interest quickly. How would you redesign our tech sessions to keep the Gen-Z crowd hooked instead of just delivering a boring lecture?`)}
+                    ${qBlock(`The Hackathon Trick`, `We need a live leaderboard web app deployed by tomorrow morning. You only have a frontend dev and a guy who knows basic Python. How do you hack this together securely in 12 hours?`)}
+                    ${qBlock(`The Visionary`, `If you were made Tech Lead today, what is the *first* internal tool or initiative you would build for the chapter?`)}
+                    ${qBlock(`The Nightmare Scenario`, `Your code has a major bug, the event starts in 1 hour, and your laptop just crashed completely. Walk me through your literal next 3 steps.`)}
+                    ${qBlock(`The Motive`, `Why write code for a community for free when you could be building your own portfolio or doing paid internships?`)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Events Accordion -->
+            <div class="ios-card accordion-item playbook-accordion border-l-[5px] border-amber-400 mb-0" style="padding:0;">
+              <div class="accordion-header flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 transition-colors select-none">
+                <h4 class="font-extrabold text-amber-600 text-lg flex items-center gap-2">🎪 Events Domain</h4>
+                <div class="p-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
+                  <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="accordion-content-wrapper">
+                <div class="accordion-inner">
+                  <div class="px-6 pb-6 pt-2">
+                    ${qBlock(`The Vibe Check`, `We often face a drop-off in footfall after the first hour of a long event. What is your strategy to inject energy and fun into the room when people start checking their phones?`)}
+                    ${qBlock(`The Booking Glitch (Trick)`, `You booked the Mini Hall, but another club is already setting up there because of an admin double-booking glitch. The speaker arrives in 20 minutes. What is your immediate action plan?`)}
+                    ${qBlock(`The Visionary`, `What is one flagship event or activity idea you have that no other club on campus is doing right now?`)}
+                    ${qBlock(`The Delegation Test`, `Walk me through the storyboard of a flagship event day, from 7 AM setup to the 5 PM wrap-up. Where is the bottleneck usually hiding, and who do you delegate it to?`)}
+                    ${qBlock(`The Motive`, `Event management is 90% stress, shouting over noise, and carrying heavy boxes. Why do you actually want to put yourself through this?`)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Creatives Accordion -->
+            <div class="ios-card accordion-item playbook-accordion border-l-[5px] border-pink-400 mb-0" style="padding:0;">
+              <div class="accordion-header flex justify-between items-center p-5 cursor-pointer hover:bg-gray-50 transition-colors select-none">
+                <h4 class="font-extrabold text-pink-600 text-lg flex items-center gap-2">🎨 Creatives Domain</h4>
+                <div class="p-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
+                  <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="accordion-content-wrapper">
+                <div class="accordion-inner">
+                  <div class="px-6 pb-6 pt-2">
+                    ${qBlock(`The Branding Pitch`, `Instagram reels are our biggest reach. Pitch me a 7-second reel idea right now that captures our tech vibe but uses trending Gen-Z audio.`)}
+                    ${qBlock(`The Internal Conflict (Trick)`, `The Tech team gives you a massive, 500-word paragraph about an AI workshop and aggressively demands that *all* of it goes on the Instagram poster. How do you win this argument without insulting them?`)}
+                    ${qBlock(`The Visionary`, `Look at our current visual identity and feed. What is the very first design element you would completely throw away, and what replaces it?`)}
+                    ${qBlock(`The Storyboard`, `You have to shoot a hype promo video during a chaotic, crowded hackathon. How do you storyboard the shots to get aesthetic footage without interrupting the participants?`)}
+                    ${qBlock(`The Motive`, `Why design for a tech club where the coders usually take all the spotlight?`)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Part 3: Closer (Matches image_3d4eaa) -->
+          <div class="ios-card border-t-[6px] border-t-emerald-500 mt-8 p-6">
+            <h3 class="text-xl font-extrabold text-emerald-800 mb-5">Part 3: The Closer <span class="text-sm font-medium text-gray-500 font-normal ml-2">(Ask to ALL Domains)</span></h3>
+            ${qBlock(`The X-Factor`, `If we select you today, what is the one weird, unique, or absolute standout trait you are bringing to the core team that no one else has?`)}
+          </div>
+
+        </div>
+      `;
+
+      // Attach Accordion Listeners strictly for the playbook
+      const playbookAccordions = dom.candidateList.querySelectorAll('.playbook-accordion');
+      playbookAccordions.forEach(item => {
+        const header = item.querySelector('.accordion-header');
+        header.addEventListener('click', () => {
+          const isOpen = item.classList.contains('is-open');
+          playbookAccordions.forEach(i => i.classList.remove('is-open'));
+          if (!isOpen) item.classList.add('is-open');
+        });
+      });
+    }
+
+    // Event listeners for Candidate evaluation logic
+    function attachEvalListeners() {
+      const items = document.querySelectorAll('.accordion-item');
+
+      items.forEach(item => {
+        const header = item.querySelector('.accordion-header');
+        const inputs = item.querySelectorAll('.eval-input');
+        const saveBtn = item.querySelector('.save-eval-btn');
+        const email = item.getAttribute('data-email');
+        const badgeContainer = item.querySelector('.status-badge-container');
+        
+        const p1Marks = Number(item.getAttribute('data-p1')) || 0;
+        const displayP1 = item.querySelector('.display-p1-calc');
+        const displayP2 = item.querySelector('.display-p2-calc');
+        const displayFinal = item.querySelector('.display-final-score');
+        const displayStatus = item.querySelector('.display-status-badge');
+
+        const p1Weighted = p1Marks * 0.4;
+        displayP1.innerText = p1Weighted.toFixed(1);
+
+        header.addEventListener('click', () => {
+          const isOpen = item.classList.contains('is-open');
+          items.forEach(i => i.classList.remove('is-open'));
+          if (!isOpen) item.classList.add('is-open');
+        });
+
+        inputs.forEach(input => {
+          input.addEventListener('input', () => {
+            if (input.value > 20) input.value = 20;
+            if (input.value < 0) input.value = 0;
+            
+            let phase2RawSum = 0;
+            inputs.forEach(inp => phase2RawSum += Number(inp.value) || 0);
+            
+            const p2Weighted = phase2RawSum * 0.6;
+            const finalScore = p1Weighted + p2Weighted;
+            
+            displayP2.innerText = p2Weighted.toFixed(1);
+            displayFinal.innerText = finalScore.toFixed(1);
+            
+            if (phase2RawSum === 0) {
+              displayStatus.className = "display-status-badge px-4 py-2.5 rounded-xl text-sm font-bold bg-gray-100 text-gray-400 border border-gray-200 whitespace-nowrap shadow-sm transition-colors duration-300";
+              displayStatus.innerText = "Awaiting Score";
+              displayFinal.className = "text-4xl text-gray-900 font-black tracking-tighter display-final-score";
+            } else if (finalScore >= 80) {
+              displayStatus.className = "display-status-badge px-4 py-2.5 rounded-xl text-sm font-bold bg-green-100 text-green-700 border border-green-200 whitespace-nowrap shadow-sm transition-colors duration-300";
+              displayStatus.innerText = "Selected";
+              displayFinal.className = "text-4xl text-green-600 font-black tracking-tighter display-final-score";
+            } else if (finalScore >= 65) {
+              displayStatus.className = "display-status-badge px-4 py-2.5 rounded-xl text-sm font-bold bg-amber-100 text-amber-700 border border-amber-200 whitespace-nowrap shadow-sm transition-colors duration-300";
+              displayStatus.innerText = "On Hold";
+              displayFinal.className = "text-4xl text-amber-500 font-black tracking-tighter display-final-score";
+            } else {
+              displayStatus.className = "display-status-badge px-4 py-2.5 rounded-xl text-sm font-bold bg-red-100 text-red-700 border border-red-200 whitespace-nowrap shadow-sm transition-colors duration-300";
+              displayStatus.innerText = "Rejected";
+              displayFinal.className = "text-4xl text-red-500 font-black tracking-tighter display-final-score";
+            }
+          });
+        });
+
+        saveBtn.addEventListener('click', async () => {
+          let phase2RawSum = 0;
+          inputs.forEach(inp => phase2RawSum += Number(inp.value) || 0);
+
+          saveBtn.disabled = true;
+          saveBtn.innerText = "Saving...";
+          saveBtn.classList.add('opacity-70');
+
+          try {
+            const params = new URLSearchParams();
+            params.append("action", "update");
+            params.append("sheet", currentTab);
+            params.append("email", email);
+            params.append("marks", phase2RawSum);
+
+            const url = `${APPS_SCRIPT_URL}?${params.toString()}`;
+            const response = await fetch(url);
+            const json = await response.json();
+            
+            if (json.status !== "success") throw new Error(json.message);
+
+            const masterCandidate = sheetData[currentTab].find(x => x["College Mail"] === email);
+            if (masterCandidate) masterCandidate["Phase 2 Marks"] = phase2RawSum;
+
+            badgeContainer.innerHTML = getStatusBadge(phase2RawSum);
+            
+            saveBtn.innerText = "Saved ✓";
+            saveBtn.classList.replace('bg-gray-900', 'bg-green-600');
+            saveBtn.classList.replace('hover:bg-indigo-600', 'hover:bg-green-700');
+            
+            setTimeout(() => {
+              item.classList.remove('is-open'); 
+              saveBtn.innerText = "Save Marks";
+              saveBtn.disabled = false;
+              saveBtn.classList.replace('bg-green-600', 'bg-gray-900');
+              saveBtn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-600');
+              saveBtn.classList.remove('opacity-70');
+            }, 1000);
+
+          } catch (error) {
+            alert("Save failed: " + error.message);
+            saveBtn.innerText = "Save Marks";
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-70');
+          }
+        });
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
